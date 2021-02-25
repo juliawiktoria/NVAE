@@ -276,7 +276,8 @@ def init_processes(rank, size, fn, args):
     """ Initialize the distributed environment. """
     os.environ['MASTER_ADDR'] = args.master_address
     os.environ['MASTER_PORT'] = '6020'
-    torch.cuda.set_device(1)
+    torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # torch.cuda.set_device(1)
     dist.init_process_group(backend='nccl', init_method='env://', rank=rank, world_size=size)
     fn(args)
     cleanup()
