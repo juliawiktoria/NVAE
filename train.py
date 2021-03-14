@@ -393,7 +393,7 @@ if __name__ == '__main__':
     utils.create_exp_dir(args.save)
 
     size = args.num_process_per_node
-    args.distributed = True
+    args.distributed = False
 
     main(args)
 
