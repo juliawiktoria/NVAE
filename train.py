@@ -118,6 +118,8 @@ def main(args):
             writer.add_scalar('val/bpd_elbo', valid_nelbo * bpd_coeff, epoch)
 
         save_freq = int(np.ceil(args.epochs / 100))
+        checkpoint_name = 'checkpoint_epoch_{}.pt'.format(epoch)
+        checkpoint_file = os.path.join(args.save, checkpoint_name)
         if epoch % save_freq == 0 or epoch == (args.epochs - 1):
             if args.global_rank == 0:
                 logging.info('saving the model.')
@@ -138,6 +140,7 @@ def main(args):
 
 
 def train(train_queue, model, cnn_optimizer, grad_scalar, global_step, warmup_iters, writer, logging):
+    print("training function started")
     alpha_i = utils.kl_balancer_coeff(num_scales=model.num_latent_scales,
                                       groups_per_scale=model.groups_per_scale, fun='square')
     nelbo = utils.AvgrageMeter()
@@ -234,6 +237,7 @@ def train(train_queue, model, cnn_optimizer, grad_scalar, global_step, warmup_it
 
 
 def test(valid_queue, model, num_samples, args, logging):
+    print("testing function started")
     if args.distributed:
         dist.barrier()
     nelbo_avg = utils.AvgrageMeter()

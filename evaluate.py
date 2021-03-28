@@ -10,9 +10,11 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from time import time
-
+from PIL import Image
+import os
 from torch.multiprocessing import Process
 from torch.cuda.amp import autocast
+import torchvision.utils as vutils
 
 from model import AutoEncoder
 import utils
@@ -104,13 +106,14 @@ def main(eval_args):
                 torch.cuda.synchronize()
                 end = time()
 
-                output_tiled = utils.tile_image(output_img, n).cpu().numpy().transpose(1, 2, 0)
-                logging.info('sampling time per batch: %0.3f sec', (end - start))
-                output_tiled = np.asarray(output_tiled * 255, dtype=np.uint8)
-                output_tiled = np.squeeze(output_tiled)
-
-                plt.imshow(output_tiled)
-                plt.show()
+                # save images to 'results/eval-x/images/epochn' where x is exp id and n is epoch muber
+                # print("tensor shape: {}".format(output_img.shape))
+                # try saving the images one my one
+                path_to_images = '/content/gdrive/MyDrive/pipeline_results/NVAE/results/eval-1/images'
+                if not os.path.exists(path_to_images):
+                    os.makedirs(path_to_images)
+                for i in range(output_img.size(0)): 
+                    vutils.save_image(output_img[i, :, :, :], '%s/sample_batch%03d_img%03d.png' % (path_to_images, ind + 1, i + 1), normalize=True)
 
 
 if __name__ == '__main__':
