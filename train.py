@@ -19,6 +19,7 @@ from model import AutoEncoder
 from thirdparty.adamax import Adamax
 import utils
 import datasets
+import pandas as pd
 
 
 def main(args):
@@ -76,6 +77,10 @@ def main(args):
     else:
         global_step, init_epoch = 0, 0
 
+    # add dataframe for collecting the results
+    saving_dataframe = pd.DataFrame(columns=['dataset', 'train_nelbo', 'first_valid_nelbo', 'valid_neg_log_p',
+                                             'valid_bpd_elbo', 'valid_bpd_log_p'])
+
     for epoch in range(init_epoch, args.epochs):
         # update lrs.
         if args.distributed:
@@ -117,7 +122,8 @@ def main(args):
             writer.add_scalar('val/bpd_log_p', valid_neg_log_p * bpd_coeff, epoch)
             writer.add_scalar('val/bpd_elbo', valid_nelbo * bpd_coeff, epoch)
 
-        save_freq = int(np.ceil(args.epochs / 100))
+        # save_freq = int(np.ceil(args.epochs / 100))
+        save_freq = 1 # changed saving frequency to add checkpoint at every epoch
         checkpoint_name = 'checkpoint_epoch_{}.pt'.format(epoch)
         checkpoint_file = os.path.join(args.save, checkpoint_name)
         if epoch % save_freq == 0 or epoch == (args.epochs - 1):
@@ -127,6 +133,9 @@ def main(args):
                             'optimizer': cnn_optimizer.state_dict(), 'global_step': global_step,
                             'args': args, 'arch_instance': arch_instance, 'scheduler': cnn_scheduler.state_dict(),
                             'grad_scalar': grad_scalar.state_dict()}, checkpoint_file)
+        # save info the a new row of dataframe
+        new_row = [args.dataset, train_nelbo, valid_nelbo, valid_neg_log_p, valid_nelbo * bpd_coeff, valid_neg_log_p * bpd_coeff]
+        saving_dataframe.loc[epoch] = new_row
 
     # Final validation
     valid_neg_log_p, valid_nelbo = test(valid_queue, model, num_samples=1000, args=args, logging=logging)
@@ -137,6 +146,9 @@ def main(args):
     writer.add_scalar('val/bpd_log_p', valid_neg_log_p * bpd_coeff, epoch + 1)
     writer.add_scalar('val/bpd_elbo', valid_nelbo * bpd_coeff, epoch + 1)
     writer.close()
+
+    # save the data frame to csv file
+    saving_dataframe.to_csv("nvae_train_eval_data.csv", index=False)
 
 
 def train(train_queue, model, cnn_optimizer, grad_scalar, global_step, warmup_iters, writer, logging):
