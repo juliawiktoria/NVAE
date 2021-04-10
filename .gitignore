@@ -3,4 +3,6 @@ visualizations/
 .run/
 *.pyc
 *.pdf
-NVAEenv/
+nvae_env/
+
+.vscode/
