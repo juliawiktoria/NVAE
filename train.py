@@ -139,6 +139,8 @@ def main(args):
 
     # Final validation
     valid_neg_log_p, valid_nelbo = test(valid_queue, model, num_samples=1000, args=args, logging=logging)
+    # save the data frame to csv file
+    saving_dataframe.to_csv("nvae_train_eval_data.csv", index=False)
     logging.info('final valid nelbo %f', valid_nelbo)
     logging.info('final valid neg log p %f', valid_neg_log_p)
     writer.add_scalar('val/neg_log_p', valid_neg_log_p, epoch + 1)
@@ -147,8 +149,7 @@ def main(args):
     writer.add_scalar('val/bpd_elbo', valid_nelbo * bpd_coeff, epoch + 1)
     writer.close()
 
-    # save the data frame to csv file
-    saving_dataframe.to_csv("nvae_train_eval_data.csv", index=False)
+    
 
 
 def train(train_queue, model, cnn_optimizer, grad_scalar, global_step, warmup_iters, writer, logging):
